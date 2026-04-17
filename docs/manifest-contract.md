@@ -92,8 +92,8 @@ The bootstrap resolves two separate install roots:
 - `appInstallRoot`: the app namespace under that root, computed as `<installRoot>/<app.appRoot>`
 
 Examples:
-- `floe-core` -> `.floe/core`
-- `floe-mem` -> `.floe/memory`
+- `appRoot: app-one` -> `.floe/app-one`
+- `appRoot: app-two` -> `.floe/app-two`
 
 ## Fixed Mode Semantics
 

@@ -36,8 +36,8 @@ The contract is consistency of experience, not identical file operations.
 Floe apps should install into a shared `.floe/` root using app-specific namespaces by default.
 
 Examples:
-- `floe-core` installs under `.floe/core`
-- `floe-mem` installs under `.floe/memory`
+- one app installs under `.floe/app-one`
+- another app installs under `.floe/app-two`
 
 The shared bootstrap should treat these namespaced paths as the default destination for product-owned files. Mappings may still target integration or runtime surfaces explicitly when needed.
 

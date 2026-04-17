@@ -20,7 +20,7 @@ This repository defines reusable conventions for:
 - build and packaging boundaries
 - integration/runtime surfaces at repo root
 
-These docs are intended to be consumed by multiple repos such as `floe-core`, `floe-mem`, and future Floe products.
+These docs are intended to be consumed by Floe-family product repos that need a shared bootstrap installer and manifest contract.
 
 ## Documents
 
@@ -50,7 +50,7 @@ Each consuming app should declare its namespace through `app.appRoot` in `instal
 
 ## Consuming From Another Repo
 
-For a product repo such as `floe-core` or `floe-mem`, the integration model is:
+For any consuming Floe-family product repo, the integration model is:
 
 1. Add `floe-boot` as a dependency.
 2. Keep canonical product files under `floe/`.
@@ -110,9 +110,9 @@ npx floe-bootstrap --manifest ./install/manifest.yml
 
 ```yaml
 app:
-  id: floe-mem
-  name: Floe Memory
-  appRoot: memory
+  id: your-app
+  name: Your App
+  appRoot: your-namespace
 
 defaults:
   installRoot: .floe
@@ -141,14 +141,11 @@ mappings:
 - lifecycle hook invocation
 - dry-run and non-interactive handling
 
-### Product-Specific Notes
+### Integration Surfaces
 
-`floe-core`
-- should declare `appRoot: core`
-- will typically map product files into `.floe/core`
-- may still manage runtime state or shared top-level `.floe` paths explicitly where needed
+A consuming app may still target integration or runtime surfaces outside its namespaced `.floe/<appRoot>` path when required.
 
-`floe-mem`
-- should declare `appRoot: memory`
-- should map product-owned files into `.floe/memory`
-- can still install integration-facing assets into `.agents/`, `.github/`, `.claude/`, or runtime data surfaces through explicit mappings
+Typical examples include:
+- agent integration folders such as `.agents/`, `.github/`, or `.claude/`
+- runtime data folders required by the installed product
+- explicitly shared top-level `.floe/` paths when the product truly owns them
