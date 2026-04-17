@@ -61,13 +61,37 @@ function resolveAppInstallRoot(installRoot, appRoot) {
   return ensureInside(installRoot, resolve(installRoot, appRoot), "app install root");
 }
 
-function normalizeTargetId(modeConfig, targetId) {
-  if (!targetId) return null;
-  const target = modeConfig.targets.find((entry) => entry.id === targetId);
-  if (!target) {
-    throw new Error(`Unknown target '${targetId}' for selected mode`);
+function normalizeRequestedTargets(value) {
+  const entries = Array.isArray(value) ? value : value == null ? [] : [value];
+  const normalized = [];
+
+  for (const entry of entries) {
+    if (typeof entry !== "string") continue;
+    for (const target of entry.split(",").map((item) => item.trim()).filter(Boolean)) {
+      if (!normalized.includes(target)) {
+        normalized.push(target);
+      }
+    }
   }
-  return target.id;
+
+  return normalized;
+}
+
+function normalizeTargetIds(modeConfig, targetIds) {
+  if (!targetIds || !targetIds.length) return [];
+
+  const normalized = [];
+  for (const targetId of targetIds) {
+    const target = modeConfig.targets.find((entry) => entry.id === targetId);
+    if (!target) {
+      throw new Error(`Unknown target '${targetId}' for selected mode`);
+    }
+    if (!normalized.includes(target.id)) {
+      normalized.push(target.id);
+    }
+  }
+
+  return normalized;
 }
 
 function formatSummary(context) {
@@ -77,7 +101,7 @@ function formatSummary(context) {
     `Project root: ${context.projectRoot}`,
     `Shared install root: ${context.installRoot}`,
     `App install root: ${context.appInstallRoot}`,
-    `Target: ${context.target ?? "default"}`,
+    `Targets: ${context.targets.length ? context.targets.join(", ") : "all"}`,
     `Manifest: ${context.manifest.path}`,
   ].join("\n");
 }
@@ -112,26 +136,32 @@ async function selectMode(context) {
   return selection;
 }
 
-async function selectTarget(context, modeConfig) {
-  if (!modeConfig.targets.length) return null;
-  if (context.args.target) return normalizeTargetId(modeConfig, context.args.target);
-  if (modeConfig.targets.length === 1 || !context.interactive) {
-    return modeConfig.targets[0].id;
+async function selectTargets(context, modeConfig) {
+  if (!modeConfig.targets.length) return [];
+  if (context.args.targets.length) return normalizeTargetIds(modeConfig, context.args.targets);
+  if (!context.interactive) {
+    return modeConfig.targets.map((entry) => entry.id);
+  }
+  if (modeConfig.targets.length === 1) {
+    return [modeConfig.targets[0].id];
   }
 
-  const selection = await prompts.select({
-    message: "Select target",
+  const selection = await prompts.multiselect({
+    message: "Select targets",
     options: modeConfig.targets.map((entry) => ({
       value: entry.id,
       label: entry.label,
       hint: entry.description,
     })),
+    initialValues: modeConfig.targets.map((entry) => entry.id),
+    required: false,
   });
 
   if (prompts.isCancel(selection)) {
     throw new Error("Installation cancelled");
   }
-  return selection;
+
+  return normalizeTargetIds(modeConfig, selection);
 }
 
 function createContext(manifest, args) {
@@ -143,7 +173,10 @@ function createContext(manifest, args) {
 
   return {
     manifest,
-    args,
+    args: {
+      ...args,
+      targets: normalizeRequestedTargets(args.targets ?? args.target),
+    },
     interactive,
     projectRoot: resolve(args.projectRoot ?? process.cwd()),
     platform: platform(),
@@ -282,6 +315,7 @@ function runHookScripts(hookName, scripts, context) {
           appRoot: context.manifest.app.appRoot,
           mode: context.mode,
           target: context.target,
+          targets: context.targets,
           projectRoot: context.projectRoot,
           installRoot: context.installRoot,
           appInstallRoot: context.appInstallRoot,
@@ -301,7 +335,7 @@ function runHookScripts(hookName, scripts, context) {
 function mappingApplies(mapping, context) {
   if (mapping.modes.length && !mapping.modes.includes(context.mode)) return false;
   if (mapping.platforms.length && !mapping.platforms.includes(context.platform)) return false;
-  if (mapping.targets.length && !mapping.targets.includes(context.target)) return false;
+  if (mapping.targets.length && !mapping.targets.some((target) => context.targets.includes(target))) return false;
   return true;
 }
 
@@ -385,14 +419,15 @@ export async function runBootstrap(manifest, args) {
     throw new Error(`Mode '${mode}' is disabled in manifest`);
   }
 
-  const target = await selectTarget(baseContext, modeConfig);
+  const targets = await selectTargets(baseContext, modeConfig);
   const installRoot = resolveInstallRoot(mode, modeConfig.installRoot ?? manifest.defaults.installRoot, baseContext.projectRoot);
   const appInstallRoot = resolveAppInstallRoot(installRoot, manifest.app.appRoot);
 
   const context = {
     ...baseContext,
     mode,
-    target,
+    target: targets.length === 1 ? targets[0] : null,
+    targets,
     installRoot,
     appInstallRoot,
     actions: [],
@@ -440,5 +475,6 @@ export async function runBootstrap(manifest, args) {
     projectRoot: context.projectRoot,
     mode: context.mode,
     target: context.target,
+    targets: context.targets,
   };
 }

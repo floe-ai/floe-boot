@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { parseArgs } from "../src/cli.js";
 import { loadManifest } from "../src/manifest.js";
 import { runBootstrap } from "../src/bootstrap.js";
 
@@ -127,4 +128,103 @@ mappings:
   );
 
   assert.throws(() => loadManifest(manifestPath), /app\.appRoot must be a safe relative path/);
+});
+
+test("parseArgs accepts repeated and csv targets", () => {
+  const parsed = parseArgs(["--target", "codex,copilot", "--target", "claude"]);
+  assert.deepEqual(parsed.targets, ["codex", "copilot", "claude"]);
+});
+
+test("runBootstrap applies multiple selected targets in one run", async () => {
+  const root = makeAppTree();
+  writeFileSync(join(root, "floe", "codex.txt"), "codex\n", "utf8");
+  writeFileSync(join(root, "floe", "copilot.txt"), "copilot\n", "utf8");
+  writeFileSync(join(root, "floe", "claude.txt"), "claude\n", "utf8");
+
+  const manifestPath = writeManifest(
+    root,
+    `
+app:
+  id: test-app
+  name: Test App
+  appRoot: memory
+modes:
+  project:
+    targets:
+      - codex
+      - copilot
+      - claude
+mappings:
+  - from: codex.txt
+    to: .agents/codex.txt
+    destRoot: projectRoot
+    targets: [codex]
+  - from: copilot.txt
+    to: .github/copilot.txt
+    destRoot: projectRoot
+    targets: [copilot]
+  - from: claude.txt
+    to: .claude/claude.txt
+    destRoot: projectRoot
+    targets: [claude]
+`
+  );
+
+  const manifest = loadManifest(manifestPath);
+  const result = await runBootstrap(manifest, {
+    yes: true,
+    force: false,
+    dryRun: false,
+    nonInteractive: true,
+    projectRoot: root,
+    targets: ["codex", "copilot"],
+  });
+
+  assert.deepEqual(result.targets, ["codex", "copilot"]);
+  assert.equal(existsSync(join(root, ".agents", "codex.txt")), true);
+  assert.equal(existsSync(join(root, ".github", "copilot.txt")), true);
+  assert.equal(existsSync(join(root, ".claude", "claude.txt")), false);
+});
+
+test("runBootstrap defaults to all declared targets when none are specified", async () => {
+  const root = makeAppTree();
+  writeFileSync(join(root, "floe", "codex.txt"), "codex\n", "utf8");
+  writeFileSync(join(root, "floe", "copilot.txt"), "copilot\n", "utf8");
+
+  const manifestPath = writeManifest(
+    root,
+    `
+app:
+  id: test-app
+  name: Test App
+  appRoot: memory
+modes:
+  project:
+    targets:
+      - codex
+      - copilot
+mappings:
+  - from: codex.txt
+    to: .agents/codex.txt
+    destRoot: projectRoot
+    targets: [codex]
+  - from: copilot.txt
+    to: .github/copilot.txt
+    destRoot: projectRoot
+    targets: [copilot]
+`
+  );
+
+  const manifest = loadManifest(manifestPath);
+  const result = await runBootstrap(manifest, {
+    yes: true,
+    force: false,
+    dryRun: true,
+    nonInteractive: true,
+    projectRoot: root,
+    targets: [],
+  });
+
+  assert.deepEqual(result.targets, ["codex", "copilot"]);
+  assert.equal(result.actions.length, 2);
 });

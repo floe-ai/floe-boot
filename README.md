@@ -106,6 +106,12 @@ Example direct dev usage:
 npx floe-bootstrap --manifest ./install/manifest.yml
 ```
 
+Example subset install:
+
+```bash
+npx floe-bootstrap --manifest ./install/manifest.yml --target codex --target copilot
+```
+
 ### Minimal Manifest
 
 ```yaml

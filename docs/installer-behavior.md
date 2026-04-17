@@ -16,7 +16,7 @@ Floe products should aim for a consistent bootstrap installer experience across 
 The shared layer should standardize:
 - CLI flag shape
 - interactive confirmation flow
-- target selection UX
+- target selection UX, including multi-select where supported
 - overwrite semantics
 - non-interactive behavior
 - success and failure reporting
@@ -67,7 +67,7 @@ Apps should consume this bootstrap runtime as a package dependency rather than c
 Where applicable, bootstrap installers should prefer a common vocabulary such as:
 - `--mode <project|global>`
 - `--project-root`
-- `--target`
+- `--target` repeatable and CSV-capable
 - `--manifest`
 - `--force`
 - `--yes`
@@ -77,6 +77,8 @@ Where applicable, bootstrap installers should prefer a common vocabulary such as
 Products may add more flags, but the shared flags should keep the same meaning across repos.
 
 When `--project-root` is omitted, installers should default to the current working directory.
+
+When a mode declares named targets and no `--target` is provided, the bootstrap should apply all targets for that mode by default.
 
 ## Target Behavior Contract
 

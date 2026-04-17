@@ -8,12 +8,22 @@ function takeValue(argv, index, flag) {
   return argv[index + 1];
 }
 
+function appendTargets(args, rawValue) {
+  const values = rawValue
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  args.targets.push(...values);
+}
+
 export function parseArgs(argv) {
   const args = {
     yes: false,
     force: false,
     nonInteractive: false,
     dryRun: false,
+    targets: [],
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -29,7 +39,7 @@ export function parseArgs(argv) {
         index += 1;
         break;
       case "--target":
-        args.target = takeValue(argv, index, token);
+        appendTargets(args, takeValue(argv, index, token));
         index += 1;
         break;
       case "--manifest":
@@ -67,7 +77,7 @@ function helpText() {
     "Options:",
     "  --mode <project|global>",
     "  --project-root <path>",
-    "  --target <name>",
+    "  --target <name[,name]>", 
     "  --manifest <path>",
     "  --force",
     "  --yes",
@@ -92,6 +102,7 @@ export async function main(argv = process.argv.slice(2)) {
     const body = {
       mode: result.mode,
       target: result.target,
+      targets: result.targets,
       projectRoot: result.projectRoot,
       installRoot: result.installRoot,
       appInstallRoot: result.appInstallRoot,

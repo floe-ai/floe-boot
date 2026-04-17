@@ -85,6 +85,20 @@ Mappings may target one of these resolved roots:
 
 If omitted, `destRoot` defaults to `appInstallRoot`.
 
+## Target Selection
+
+Targets are optional mapping-group selectors. They do not determine filesystem locations.
+
+- `projectRoot`, `installRoot`, and `appInstallRoot` resolve where files go
+- `targets` determine which mappings are active for a run
+
+The bootstrap supports:
+- repeated `--target` flags
+- comma-separated target values
+- interactive multi-select when the terminal supports it
+
+If a mode declares targets and the user does not specify any, all declared targets for that mode are selected by default.
+
 ## Shared Root vs App Root
 
 The bootstrap resolves two separate install roots:
