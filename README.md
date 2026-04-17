@@ -10,7 +10,7 @@ This repo also contains the shared bootstrap installer runtime used by Floe apps
 - `install/` contains installer and packaging logic only.
 - `docs/` contains documentation only.
 - `tests/` contains tests, fixtures, and mocks only.
-- Root dotfolders such as `.github/`, `.agents/`, `.claude/`, `.codex/`, `.ai/`, and `.floe/` are integration or runtime surfaces, not canonical product source.
+- Root dotfolders such as `.github/`, `.agents/`, `.claude/`, `.codex/`, and `.floe/` are integration or runtime surfaces, not canonical product source.
 
 ## Purpose
 
