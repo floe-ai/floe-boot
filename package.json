@@ -1,0 +1,31 @@
+{
+  "name": "floe-boot",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./bootstrap": "./src/bootstrap.js",
+    "./cli": "./src/cli.js",
+    "./manifest": "./src/manifest.js"
+  },
+  "description": "Shared Floe bootstrap installer runtime and installer contract docs.",
+  "bin": {
+    "floe-bootstrap": "./bin/floe-bootstrap.js"
+  },
+  "files": [
+    "bin/",
+    "docs/",
+    "src/"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.10.1",
+    "yaml": "^2.8.1"
+  }
+}
